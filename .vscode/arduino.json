@@ -1,0 +1,7 @@
+{
+    "sketch": "ConsoleTFT_Engine_0x9341.ino",
+    "configuration": "cpu=atmega2560",
+    "board": "arduino:avr:mega",
+    "port": "COM6",
+    "output": "../.arduino-build/ConsoleTFT_Engine_0x9341"
+}
