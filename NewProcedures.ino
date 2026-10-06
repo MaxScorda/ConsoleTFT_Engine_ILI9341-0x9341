@@ -712,3 +712,129 @@ void MoireBars() {
     timevis = millis();
   }
 }
+
+void MoireScreen() {
+  constexpr uint8_t  NUM_MOIRE = 2;   
+  constexpr uint8_t  NUM_RIGHE = 50;  // Le tue 30 righe di scia
+  constexpr uint8_t  NUM_STEPP = 4;   // I 4 lati dello schermo
+
+  // --- PARAMETRIZZAZIONE DEL PASSO / DENSITÀ ---
+  // Pochi passi = righe rade e veloci. Tanti passi = righe fittissime e dense.
+  constexpr uint16_t PASSO_MIN = 25;  // Densità minima (puoi modificarla)
+  constexpr uint16_t PASSO_MAX = 80;  // Densità massima (puoi modificarla)
+
+  struct SDRiga {
+    int16_t x0, y0;
+    int16_t x1, y1;
+  };
+
+  static SDRiga   riga[NUM_MOIRE][NUM_RIGHE];
+  static uint8_t  lato[NUM_MOIRE];         // 0: Top, 1: Right, 2: Bottom, 3: Left
+  static uint16_t idxpasso[NUM_MOIRE];     // Contatore di avanzamento sul lato
+  static uint16_t passoAttuale[NUM_MOIRE]; // Numero di step per il lato corrente
+  static uint8_t  coloreFase[NUM_MOIRE];
+  static uint8_t  barsidx = 0;
+  static int16_t  ww = 0, hh = 0;
+  static bool     inizializzato = false;
+
+  // Inizializzazione al primo avvio
+  if (!inizializzato) {
+    ww = tft.width();
+    hh = tft.height();
+
+    for (uint8_t q = 0; q < NUM_MOIRE; q++) {
+      lato[q]         = (q * 2) % NUM_STEPP; // Moiré 0 parte da sopra, Moiré 1 dal lato opposto
+      idxpasso[q]     = 0;
+      passoAttuale[q] = RandNum(PASSO_MIN, PASSO_MAX); // Primo passo casuale
+      coloreFase[q]   = q * 128;
+
+      for (uint8_t r = 0; r < NUM_RIGHE; r++) {
+        riga[q][r] = {0, 0, 0, 0};
+      }
+    }
+    inizializzato = true;
+  }
+
+  #if defined(SPI_HAS_TRANSACTION) || defined(_ADAFRUIT_GFX_H_) || defined(_TFT_eSPI_H_)
+    tft.startWrite();
+  #endif
+
+  for (uint8_t m = 0; m < NUM_MOIRE; m++) {
+    // 1. CANCELLA la linea più vecchia del ring buffer
+    tft.drawLine(riga[m][barsidx].x0, riga[m][barsidx].y0, 
+                 riga[m][barsidx].x1, riga[m][barsidx].y1, 0x0000);
+
+    // 2. Calcolo proporzionale sul passo casuale del lato corrente
+    float passox = (float)(ww - 1) / passoAttuale[m];
+    float passoy = (float)(hh - 1) / passoAttuale[m];
+
+    int16_t nx0, ny0, nx1, ny1;
+
+    // 3. Coordinate in base al lato attivo
+    switch (lato[m]) {
+      case 0: // Bordo Superiore (verso destra) -> Bordo Destro (in discesa)
+        nx0 = (int16_t)(idxpasso[m] * passox);
+        ny0 = 0;
+        nx1 = ww - 1;
+        ny1 = (int16_t)(idxpasso[m] * passoy);
+        break;
+
+      case 1: // Bordo Destro (in discesa) -> Bordo Inferiore (verso sinistra)
+        nx0 = ww - 1;
+        ny0 = (int16_t)(idxpasso[m] * passoy);
+        nx1 = (ww - 1) - (int16_t)(idxpasso[m] * passox);
+        ny1 = hh - 1;
+        break;
+
+      case 2: // Bordo Inferiore (verso sinistra) -> Bordo Sinistro (in salita)
+        nx0 = (ww - 1) - (int16_t)(idxpasso[m] * passox);
+        ny0 = hh - 1;
+        nx1 = 0;
+        ny1 = (hh - 1) - (int16_t)(idxpasso[m] * passoy);
+        break;
+
+      case 3: // Bordo Sinistro (in salita) -> Bordo Superiore (verso destra)
+        nx0 = 0;
+        ny0 = (hh - 1) - (int16_t)(idxpasso[m] * passoy);
+        nx1 = (int16_t)(idxpasso[m] * passox);
+        ny1 = 0;
+        break;
+    }
+
+    // Salva le coordinate nella scia
+    riga[m][barsidx] = {nx0, ny0, nx1, ny1};
+
+    // 4. Colore cangiante
+    coloreFase[m] += 3;
+    uint8_t pos = coloreFase[m];
+    uint16_t waveColor;
+    if (pos < 85) {
+      waveColor = tft.color565(255 - pos * 3, pos * 3, 0);
+    } else if (pos < 170) {
+      waveColor = tft.color565(0, 255 - (pos - 85) * 3, (pos - 85) * 3);
+    } else {
+      waveColor = tft.color565((pos - 170) * 3, 0, 255 - (pos - 170) * 3);
+    }
+
+    // 5. Disegna la nuova linea
+    tft.drawLine(nx0, ny0, nx1, ny1, waveColor);
+
+    // 6. AVANZAMENTO E GESTIONE DEL CAMBIO LATO
+    idxpasso[m]++;
+    if (idxpasso[m] >= passoAttuale[m]) {
+      // Arrivati all'angolo dello schermo:
+      idxpasso[m] = 0;                       // Resetta l'avanzamento
+      lato[m]     = (lato[m] + 1) % NUM_STEPP; // Passa al lato successivo (0->1->2->3->0)
+      
+      // NUOVO PASSO CASUALE TRA MIN E MAX PER IL NUOVO LATO!
+      passoAttuale[m] = RandNum(PASSO_MIN, PASSO_MAX);
+    }
+  }
+
+  #if defined(SPI_HAS_TRANSACTION) || defined(_ADAFRUIT_GFX_H_) || defined(_TFT_eSPI_H_)
+    tft.endWrite();
+  #endif
+
+  // Avanza il puntatore circolare
+  if (++barsidx >= NUM_RIGHE) barsidx = 0;
+}

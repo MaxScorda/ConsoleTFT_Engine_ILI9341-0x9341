@@ -94,6 +94,10 @@ void eseguiProcedura(int id) {
       Qix();
       break;
 
+    case 16:
+      MoireScreen();
+      break;
+
     case 20:
       Oldloop();
       break;

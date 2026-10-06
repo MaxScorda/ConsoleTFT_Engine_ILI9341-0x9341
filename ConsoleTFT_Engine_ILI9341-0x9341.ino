@@ -27,7 +27,7 @@ void loop() {
   // PROCEDURA 99: Slideshow automatico ogni 1 minuto
   if (procedure == 99) {
     // Elenco delle procedure da far ruotare in sequenza
-    const uint8_t elencoDemo[] = {4,5, 6, 7, 8, 9, 10, 11, 15, 20};
+    const uint8_t elencoDemo[] = {4,5, 6, 7, 8, 9, 10, 11, 15, 16, 20};
     const uint8_t totDemo      = sizeof(elencoDemo) / sizeof(elencoDemo[0]);
 
     static uint8_t  indiceAttuale   = 0;
