@@ -15,7 +15,7 @@ static void bitmapDemo() {
   tft.fillScreen(0x0000);
   tft.drawBitmap((w/2)-10, (h/2)-10, heartImage8, 8, 8, tft.color565(255, 255, 255));
   tft.drawBitmap((w/2)+10, (h/2)+10, heartImage, 8,8, tft.color565(255, 64, 64));
-  delay(3000);
+ // delay(3000);
 }
 
 static void spriteDemo() {
@@ -48,7 +48,7 @@ static void spriteDemo() {
   sprite_x = 0;
   sprite_y = 0;
     for (int i = 0; i < 250; i++) {
-    delay(15);
+   // delay(15);
     
     // Cancella la vecchia posizione disegnandoci sopra un rettangolo nero
     tft.drawBitmap(sprite_x, sprite_y, heartImage16, 16, 16,0x0000);
@@ -89,7 +89,7 @@ static void textDemo() {
   tft.setCursor(0, 96);
   tft.print("Inverted bold?");
   
-  delay(3000);
+//  delay(3000);
 }
 
 static void canvasDemo() {
@@ -100,10 +100,10 @@ static void canvasDemo() {
   int cy = 1;
   
   tft.fillRect(cx + 10, cy + 3, 80, 5, tft.color565(0, 255, 0));
-  delay(500);
+  //delay(500);
   
   tft.fillRect(cx + 50, cy + 1, 60, 15, tft.color565(0, 255, 0));
-  delay(1500);
+//  delay(1500);
   
   // Testo nero su sfondo verde
   tft.setTextColor(0x0000, tft.color565(0, 255, 0)); 
@@ -111,7 +111,7 @@ static void canvasDemo() {
   tft.setCursor(cx + 30, cy + 1);
   tft.print(" DEMO ");
   
-  delay(3000);
+  //delay(3000);
 }
 
 static void drawLinesDemo() {
@@ -122,5 +122,5 @@ static void drawLinesDemo() {
   for (int16_t x = tft.width() - 1; x > 7; x -= 8) {
     tft.drawLine(0, 0, x, tft.height() - 1, tft.color565(0, 255, 0));
   }
-  delay(3000);
+//  delay(3000);
 }

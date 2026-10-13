@@ -45,7 +45,9 @@ int RandNum(int rmin, int rmax) {
 
 
 // -------------------------------------------------------------
-// FUNZIONE SMISTAMENTO: contiene la logica di ciascuna demo
+// FUNZIONE SMISTAMENTO
+// Contiene la logica di ciascuna singola demo/effetto.
+// Numerazione: ≤ 20  (le modalità macro/auto usano 90+)
 // -------------------------------------------------------------
 void eseguiProcedura(int id) {
   switch (id) {
@@ -96,6 +98,10 @@ void eseguiProcedura(int id) {
 
     case 16:
       MoireScreen();
+      break;
+
+    case 17:
+      InfoScreen();
       break;
 
     case 20:

@@ -838,3 +838,111 @@ void MoireScreen() {
   // Avanza il puntatore circolare
   if (++barsidx >= NUM_RIGHE) barsidx = 0;
 }
+
+
+// ============================================================
+// INFO TICKER
+// Scorre le stringhe Info (da PROGMEM) sul fondo dello schermo.
+// Non-bloccante: usa millis() per il framerate.
+// ============================================================
+void InfoTicker() {
+  const uint8_t  DELAY_MS = 25;    // ms per frame
+  const uint8_t  STEP_PX  = 2;     // pixel scrollati per frame
+  const uint8_t  TICKER_H = 10;    // altezza striscia ticker in pixel
+  const uint16_t FG_COLOR = 0xFEA0; // arancio dorato
+
+  static int16_t  xPos    = -2;    // -2 = non ancora inizializzato
+  static uint8_t  strIdx  = 0;     // indice stringa corrente (0..4)
+  static char     buf[22];         // buffer stringa letta da PROGMEM
+  static int16_t  strW    = 0;     // larghezza testo in pixel
+  static uint32_t lastT   = 0;
+
+  if (millis() - lastT < DELAY_MS) return;
+  lastT = millis();
+
+  int16_t ww = tft.width();
+  int16_t hh = tft.height();
+  int16_t tickerY = hh - TICKER_H;
+
+  // Prima chiamata: carica la prima stringa
+  if (xPos == -2) {
+    strcpy_P(buf, (const char*)pgm_read_ptr(&menu_Info[strIdx]));
+    strW = (int16_t)(strlen(buf) * 6);
+    xPos = ww;
+  }
+
+  // Cancella la striscia ticker
+  tft.fillRect(0, tickerY, ww, TICKER_H, 0x0000);
+
+  // Disegna il testo nella posizione corrente
+  tft.setTextSize(1);
+  tft.setTextColor(FG_COLOR);
+  tft.setCursor(xPos, tickerY + 1);
+  tft.print(buf);
+
+  // Scorre verso sinistra
+  xPos -= STEP_PX;
+
+  // Quando la stringa e' uscita completamente a sinistra, passa alla prossima
+  if (xPos < -strW) {
+    strIdx = (strIdx + 1) % 5;
+    strcpy_P(buf, (const char*)pgm_read_ptr(&menu_Info[strIdx]));
+    strW = (int16_t)(strlen(buf) * 6);
+    xPos = ww;
+  }
+}
+
+
+// ============================================================
+// INFO SCREEN  (modalita' 97)
+// Mostra tutte e 5 le stringhe Info centrate sullo schermo
+// con un bordo a colori cangianti animato.
+// Non-bloccante: usa millis() per il framerate.
+// ============================================================
+void InfoScreen() {
+  const uint8_t DELAY_MS = 30;
+
+  static bool     init       = false;
+  static uint8_t  colorPhase = 0;
+  static uint32_t lastT      = 0;
+
+  if (millis() - lastT < DELAY_MS) return;
+  lastT = millis();
+
+  int16_t ww = tft.width();
+  int16_t hh = tft.height();
+
+  // Disegna sfondo e testo centrato solo alla prima chiamata
+  if (!init) {
+    tft.fillScreen(0x0000);
+    tft.setTextSize(1);
+
+    char buf[22];
+    const uint8_t NSTR  = 5;
+    const int16_t lineH = 14;
+    int16_t startY = (hh - (int16_t)(NSTR * lineH)) / 2;
+
+    for (uint8_t i = 0; i < NSTR; i++) {
+      strcpy_P(buf, (const char*)pgm_read_ptr(&menu_Info[i]));
+      int16_t tw = (int16_t)(strlen(buf) * 6);
+      int16_t tx = (ww - tw) / 2;
+      int16_t ty = startY + (int16_t)(i * lineH);
+      tft.setTextColor(tft.color565(210, 210, 210));
+      tft.setCursor(tx, ty);
+      tft.print(buf);
+    }
+    init = true;
+  }
+
+  // Animazione bordo: tre rettangoli concentrici con colore RGB cangiante
+  colorPhase += 2;
+  float rad = colorPhase * 0.04f;
+  uint16_t c = tft.color565(
+    (uint8_t)(127 + 127 * sin(rad)),
+    (uint8_t)(127 + 127 * sin(rad + 2.094f)),
+    (uint8_t)(127 + 127 * sin(rad + 4.189f))
+  );
+  tft.drawRect(1, 1, ww - 2,  hh - 2,  c);
+  tft.drawRect(3, 3, ww - 6,  hh - 6,  c);
+  tft.drawRect(5, 5, ww - 10, hh - 10, c);
+}

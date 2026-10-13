@@ -6,7 +6,7 @@
 #define FARLEFT  1
 
 const char Info_00[] PROGMEM = "Demo ConsoleTFT 0.9 ";
-const char Info_01[] PROGMEM = "(c) 2019-2020 ";
+const char Info_01[] PROGMEM = "(c) 2019-2026 ";
 const char Info_02[] PROGMEM = "Max Scordamaglia ";
 const char Info_03[] PROGMEM = "maxscorda@gmail.com ";
 const char Info_04[] PROGMEM = " ... ";
